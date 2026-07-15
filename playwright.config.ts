@@ -12,6 +12,10 @@ export default defineConfig({
   webServer: {
     command: 'npm run preview -- --port 4173 --strictPort',
     url: 'http://localhost:4173/crypto-lab-signed-bytes/',
-    reuseExistingServer: !process.env.CI,
+    // Never adopt a server we didn't start: the whole crypto-lab fleet
+    // previews on 4173, and reusing a stale sibling's preview (different
+    // base path) turns into a silent 60s timeout. With --strictPort this
+    // fails fast and names the busy port instead.
+    reuseExistingServer: false,
   },
 })
