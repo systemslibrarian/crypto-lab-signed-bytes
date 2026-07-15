@@ -1,0 +1,561 @@
+/* Signed Bytes — theme contract: dark default under :root, light overrides
+   under :root[data-theme="light"]. No prefers-color-scheme (fleet rule). */
+
+:root {
+  color-scheme: dark;
+  --accent: #c2410c;
+  /* accent-hued TEXT token — >=4.5:1 on --bg/--panel in this theme */
+  --accent-text: #f0955f;
+  --bg: #141210;
+  --panel: #1e1a16;
+  --panel-soft: #262119;
+  --border: #3a332c;
+  --text: #ede7e1;
+  --text-dim: #b5aca2;
+  --ok: #2f9e68;
+  --ok-text: #58c48d;
+  --warn: #b45309;
+  --warn-text: #e2a04a;
+  --alarm: #d93036;
+  --alarm-text: #f08079;
+  --focus: #f0955f;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --accent: #c2410c;
+  --accent-text: #9a3412;
+  --bg: #faf7f4;
+  --panel: #ffffff;
+  --panel-soft: #f3ede6;
+  --border: #d8ccbf;
+  --text: #241f1a;
+  --text-dim: #5b5248;
+  --ok: #1a7d4f;
+  --ok-text: #166a43;
+  --warn: #b45309;
+  --warn-text: #8a4b04;
+  --alarm: #c22a22;
+  --alarm-text: #b3261e;
+  --focus: #9a3412;
+}
+
+html {
+  background-color: #141210;
+}
+html[data-theme='light'] {
+  background-color: #faf7f4;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  line-height: 1.55;
+}
+
+/* Base element rules scoped to #app so they never fight the shared top bar. */
+#app {
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: 0 clamp(0.9rem, 3vw, 2rem) 2rem;
+}
+#app p {
+  margin: 0.5rem 0;
+}
+#app h2 {
+  font-size: 1.25rem;
+  margin: 0 0 0.25rem;
+}
+#app h3 {
+  font-size: 1.02rem;
+  margin: 0.9rem 0 0.2rem;
+}
+#app section {
+  margin: 1.6rem 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem 1.15rem 1.15rem;
+  background: var(--panel);
+}
+#app .section-kicker {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  color: var(--accent-text);
+  text-transform: uppercase;
+  margin: 0 0 0.1rem;
+}
+#app .dim {
+  color: var(--text-dim);
+}
+#app code,
+#app .mono {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.92em;
+}
+#app code {
+  background: var(--panel-soft);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 0 0.3em;
+}
+#app a {
+  color: var(--accent-text);
+  text-decoration: underline; /* persistent underline, never color alone */
+}
+#app a:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* BEGIN cl-hero standard — managed, keep in sync across fleet */
+.cl-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: clamp(1rem, 4vw, 3rem);
+  flex-wrap: wrap;
+  margin: clamp(1rem, 3vw, 2rem) 0 1.5rem;
+}
+.cl-hero-main {
+  flex: 1 1 22rem;
+  min-width: min(100%, 20rem);
+}
+.cl-hero-title {
+  margin: 0;
+  font-size: clamp(1.6rem, 3.8vw, 2.7rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+}
+.cl-hero-sub {
+  margin: 0.4rem 0 0;
+  font-size: clamp(0.9rem, 1.6vw, 1.05rem);
+  letter-spacing: 0.01em;
+  opacity: 0.85;
+}
+.cl-hero-desc {
+  margin: 0.55rem 0 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--text-dim);
+  max-width: 60ch;
+}
+.cl-hero-why {
+  flex: 0 1 min(40%, 26rem);
+  min-width: min(100%, 15rem);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.85rem 1.05rem;
+  background: color-mix(in oklab, var(--accent) 6%, transparent);
+}
+.cl-hero-why-label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+.cl-hero-why-text {
+  margin: 0.35rem 0 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+@media (max-width: 640px) {
+  .cl-hero {
+    flex-direction: column;
+  }
+  .cl-hero-why {
+    flex-basis: auto;
+    width: 100%;
+  }
+}
+/* END cl-hero standard */
+
+/* ---------------------------------------------------------------- controls */
+#app button {
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--panel-soft);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+}
+#app button:hover {
+  border-color: var(--accent-text);
+}
+#app button.primary {
+  border-color: color-mix(in oklab, var(--accent) 55%, var(--border));
+  background: color-mix(in oklab, var(--accent) 14%, var(--panel-soft));
+}
+#app button:focus-visible,
+#app a:focus-visible,
+#app input:focus-visible,
+#app textarea:focus-visible,
+#app [tabindex='0']:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+#app textarea {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.88rem;
+  color: var(--text);
+  background: var(--panel-soft);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 0.6rem;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 3.4rem;
+  resize: vertical;
+}
+#app input[type='text'] {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.9rem;
+  color: var(--text);
+  background: var(--panel-soft);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
+}
+#app label {
+  font-size: 0.85rem;
+}
+#app fieldset {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin: 0.6rem 0;
+  padding: 0.5rem 0.9rem 0.7rem;
+}
+#app legend {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  padding: 0 0.35rem;
+}
+#app .row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  margin: 0.6rem 0;
+}
+#app .grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem;
+}
+@media (max-width: 640px) {
+  #app .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ------------------------------------------------------- verdict indicators */
+/* Two SEPARATE indicators, never merged:
+   .chip-crypto — the raw cryptographic return value. Deliberately NEUTRAL
+     (no green/red): a bare boolean about bytes carries no security meaning.
+   .chip-verdict — the system-integrity verdict. THIS is where color lives:
+     ok (green), fail-closed (amber), alarm (red). A valid-signature +
+     changed-meaning case renders as ALARM, never as green. */
+#app .chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0.7rem 0 0.3rem;
+}
+#app .chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  border-radius: 9px;
+  padding: 0.42rem 0.7rem;
+  font-size: 0.86rem;
+  border: 1px solid var(--border);
+}
+#app .chip .chip-tag {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+#app .chip-crypto {
+  background: var(--panel-soft);
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+}
+#app .chip-verdict.v-ok {
+  border-color: color-mix(in oklab, var(--ok) 55%, var(--border));
+  background: color-mix(in oklab, var(--ok) 11%, transparent);
+}
+#app .chip-verdict.v-ok .chip-state {
+  color: var(--ok-text);
+}
+#app .chip-verdict.v-failclosed {
+  border-color: color-mix(in oklab, var(--warn) 55%, var(--border));
+  background: color-mix(in oklab, var(--warn) 11%, transparent);
+}
+#app .chip-verdict.v-failclosed .chip-state {
+  color: var(--warn-text);
+}
+#app .chip-verdict.v-alarm {
+  border-color: color-mix(in oklab, var(--alarm) 60%, var(--border));
+  background: color-mix(in oklab, var(--alarm) 12%, transparent);
+}
+#app .chip-verdict.v-alarm .chip-state {
+  color: var(--alarm-text);
+}
+#app .chip-state {
+  font-weight: 700;
+}
+#app .verdict-note {
+  font-size: 0.88rem;
+  color: var(--text-dim);
+  max-width: 70ch;
+}
+
+/* --------------------------------------------------------------- hex diff */
+#app .hexpair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem;
+}
+@media (max-width: 640px) {
+  #app .hexpair {
+    grid-template-columns: 1fr;
+  }
+}
+#app .hexbox {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-soft);
+  padding: 0.5rem 0.6rem;
+  overflow: auto;
+  max-height: 14rem;
+}
+#app .hexbox .hexline {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+  white-space: pre;
+}
+#app .hexbox .b {
+  padding: 0 0.08em;
+}
+#app .hexbox .b.d {
+  background: color-mix(in oklab, var(--alarm) 22%, transparent);
+  color: var(--alarm-text);
+  font-weight: 700;
+  text-decoration: underline; /* differences are never color-only */
+  text-underline-offset: 2px;
+}
+:root[data-theme='light'] #app .hexbox .b.d {
+  /* lighter tint + darker ink: >=4.5:1 on the light panel */
+  background: color-mix(in oklab, var(--alarm) 11%, transparent);
+  color: #8f1c15;
+}
+#app .hexcaption {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  margin: 0.25rem 0 0.35rem;
+}
+#app .digest {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  word-break: break-all;
+  color: var(--text-dim);
+}
+#app .digest .match-no {
+  color: var(--alarm-text);
+  font-weight: 700;
+}
+#app .digest .match-yes {
+  color: var(--ok-text);
+  font-weight: 700;
+}
+
+/* ------------------------------------------------------------- code points */
+#app .cp-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.4rem 0;
+}
+#app .cp {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel-soft);
+  padding: 0.15rem 0.45rem;
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  text-align: center;
+}
+#app .cp .cp-glyph {
+  display: block;
+  font-size: 1.05rem;
+  color: var(--text);
+}
+#app .cp .cp-code {
+  color: var(--text-dim);
+}
+#app .cp.cp-diff {
+  border-color: color-mix(in oklab, var(--alarm) 55%, var(--border));
+  background: color-mix(in oklab, var(--alarm) 10%, transparent);
+}
+
+/* ---------------------------------------------------------------- stepper */
+#app .step {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent-text);
+  border-radius: 8px;
+  background: var(--panel-soft);
+  padding: 0.6rem 0.85rem;
+  margin: 0.55rem 0;
+}
+#app .step[hidden] {
+  display: none;
+}
+#app .step .step-n {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+#app .wirebytes {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+  word-break: break-all;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.35rem 0.5rem;
+  margin: 0.3rem 0;
+}
+
+/* ------------------------------------------------------------- scoreboard */
+#app table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.88rem;
+}
+#app th,
+#app td {
+  border: 1px solid var(--border);
+  padding: 0.45rem 0.6rem;
+  text-align: left;
+  vertical-align: top;
+}
+#app th {
+  background: var(--panel-soft);
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+#app td .cell-ok {
+  color: var(--ok-text);
+  font-weight: 700;
+}
+#app td .cell-no {
+  color: var(--warn-text);
+  font-weight: 700;
+}
+
+/* --------------------------------------------------------------- misc */
+#app details {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-soft);
+  padding: 0.45rem 0.8rem;
+  margin: 0.7rem 0;
+}
+#app summary {
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--accent-text);
+}
+#app .keyline {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  word-break: break-all;
+  color: var(--text-dim);
+}
+#app .notice {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--warn);
+  border-radius: 8px;
+  padding: 0.55rem 0.85rem;
+  background: var(--panel-soft);
+  font-size: 0.88rem;
+  color: var(--text-dim);
+}
+#app .jcs-bar {
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-start;
+  border: 1px solid color-mix(in oklab, var(--accent) 45%, var(--border));
+  background: color-mix(in oklab, var(--accent) 8%, transparent);
+  border-radius: 10px;
+  padding: 0.7rem 0.95rem;
+}
+#app .jcs-bar input {
+  margin-top: 0.3rem;
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--accent);
+}
+#app .boundary-track {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  margin: 0.6rem 0;
+}
+@media (max-width: 640px) {
+  #app .boundary-track {
+    grid-template-columns: 1fr;
+  }
+}
+#app .boundary-stop {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+  background: var(--panel-soft);
+}
+#app .boundary-stop input {
+  accent-color: var(--accent);
+}
+#app .boundary-stop.selected {
+  border-color: var(--accent-text);
+}
+#app .muta-list {
+  list-style: none;
+  margin: 0.5rem 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+#app .muta-list li {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-soft);
+  padding: 0.45rem 0.7rem;
+}
+
+.scripture-footer {
+  border-top: 1px solid var(--border);
+  margin-top: 2.5rem;
+  padding: 1.1rem clamp(0.9rem, 3vw, 2rem) 1.6rem;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  text-align: center;
+}
