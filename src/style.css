@@ -514,28 +514,168 @@ body {
   height: 1.05rem;
   accent-color: var(--accent);
 }
-#app .boundary-track {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.6rem;
+/* Stage 5 pipeline + boundary slider */
+#app .pipe-wrap {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-soft);
+  padding: 0.8rem 0.95rem;
   margin: 0.6rem 0;
 }
-@media (max-width: 640px) {
-  #app .boundary-track {
-    grid-template-columns: 1fr;
-  }
+#app .pipe-track {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.4rem;
+  position: relative;
 }
-#app .boundary-stop {
+#app .pipe-node {
+  position: relative;
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 0.55rem 0.7rem;
-  background: var(--panel-soft);
+  background: var(--panel);
+  padding: 0.5rem 0.55rem 0.55rem;
+  text-align: center;
+  min-height: 3.2rem;
 }
-#app .boundary-stop input {
-  accent-color: var(--accent);
+#app .pipe-node:not(:last-child)::after {
+  content: '→';
+  position: absolute;
+  right: -1.15rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-dim);
+  font-size: 1rem;
 }
-#app .boundary-stop.selected {
+#app .pipe-node-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+#app .pipe-node.inside {
+  border-color: color-mix(in oklab, var(--accent) 55%, var(--border));
+  background: color-mix(in oklab, var(--accent) 9%, var(--panel));
+}
+#app .pipe-badge {
+  display: none;
+  margin-top: 0.25rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+#app .pipe-node.tap {
   border-color: var(--accent-text);
+  box-shadow: 0 0 0 1px var(--accent-text);
+}
+#app .pipe-node.tap .pipe-badge {
+  display: block;
+}
+@media (max-width: 640px) {
+  #app .pipe-track {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  #app .pipe-node:not(:last-child)::after {
+    content: '↓';
+    right: 50%;
+    top: auto;
+    bottom: -1.35rem;
+    transform: translateX(50%);
+  }
+}
+#app input[type='range'] {
+  flex: 1 1 12rem;
+  max-width: 24rem;
+  accent-color: var(--accent);
+  height: 1.2rem;
+}
+#app tr.current-row th,
+#app tr.current-row td {
+  background: color-mix(in oklab, var(--accent) 10%, transparent);
+}
+
+/* Exhibit 1 pipeline diagram — motion only on learner action */
+#app .mech-diagram {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.6rem;
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-soft);
+  padding: 0.9rem 0.95rem 1.3rem;
+  margin: 0.7rem 0;
+}
+#app .mech-node {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  padding: 0.45rem 0.5rem;
+  text-align: center;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+#app .mech-node:not(:last-of-type)::after {
+  content: '→';
+  position: absolute;
+  right: -1.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-dim);
+}
+#app .mech-node.active {
+  border-color: var(--accent-text);
+  box-shadow: 0 0 0 1px var(--accent-text);
+}
+#app .mech-node.rejecting {
+  border-color: color-mix(in oklab, var(--warn) 65%, var(--border));
+  box-shadow: 0 0 0 1px var(--warn-text);
+}
+#app .mech-packet {
+  position: absolute;
+  bottom: 0.28rem;
+  left: 12%;
+  transform: translateX(-50%);
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--accent-text);
+  transition: left 0.55s ease;
+  white-space: nowrap;
+}
+#app .mech-diagram.at-producer .mech-packet {
+  left: 16.66%;
+}
+#app .mech-diagram.at-gateway .mech-packet {
+  left: 50%;
+}
+#app .mech-diagram.at-verifier .mech-packet {
+  left: 83.33%;
+}
+@keyframes bytepulse {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.35);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+#app .pulse-once .hexbox .b.d {
+  display: inline-block;
+  animation: bytepulse 0.5s ease 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  #app .mech-packet {
+    transition: none;
+  }
+  #app .pulse-once .hexbox .b.d {
+    animation: none;
+  }
 }
 #app .muta-list {
   list-style: none;

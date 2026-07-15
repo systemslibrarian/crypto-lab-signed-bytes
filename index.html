@@ -373,10 +373,11 @@
         <p class="section-kicker">Stage 5 — the signature boundary</p>
         <h2 id="stage-5-h">Where does the signature attach?</h2>
         <p>
-          A document crosses a pipeline: raw bytes are parsed, maybe normalized, maybe re-serialized. Choose the point
-          where the signature is applied and verified, then flip on in-transit re-encodings. Everything the signature
-          no longer notices is a byte surface an attacker controls without detection; everything it still notices will
-          also break for every honest middlebox.
+          Every received message crosses the same pipeline: wire bytes are parsed, NFC-normalized, and re-serialized in
+          canonical form. Drag the signature boundary between the taps, flip on in-transit re-encodings, and watch the
+          real verifier's tolerance change — then read the full measured matrix. Everything the signature no longer
+          notices is a byte surface an attacker controls without detection; everything it still notices will also
+          break for every honest middlebox.
         </p>
         <div data-mount="stage-boundary"></div>
       </section>

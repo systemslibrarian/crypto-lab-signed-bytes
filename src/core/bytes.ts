@@ -37,11 +37,51 @@ export function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
   return diff === 0
 }
 
-/** Per-index difference mask between two byte strings (true = bytes differ or
- *  only one side has a byte at that index). Drives the hex-diff viewer. */
-export function diffMask(a: Uint8Array, b: Uint8Array): boolean[] {
-  const n = Math.max(a.length, b.length)
-  const mask = new Array<boolean>(n)
-  for (let i = 0; i < n; i++) mask[i] = i >= a.length || i >= b.length || a[i] !== b[i]
-  return mask
+export interface DiffMasks {
+  /** true at index i = byte a[i] has no counterpart in b (changed/removed) */
+  a: boolean[]
+  /** true at index j = byte b[j] has no counterpart in a (changed/inserted) */
+  b: boolean[]
+}
+
+/**
+ * Alignment-aware byte diff for the hex viewer: bytes not on a longest common
+ * subsequence are marked, so a single inserted byte highlights just itself
+ * instead of shifting every byte after it into "different". Falls back to
+ * positional comparison when the quadratic LCS table would be too large.
+ */
+export function byteDiffMasks(a: Uint8Array, b: Uint8Array): DiffMasks {
+  const n = a.length
+  const m = b.length
+  if (n * m > 1 << 18) {
+    // fallback: positional diff (documents this large scroll anyway)
+    return {
+      a: Array.from({ length: n }, (_, i) => i >= m || a[i] !== b[i]),
+      b: Array.from({ length: m }, (_, j) => j >= n || a[j] !== b[j]),
+    }
+  }
+  const w = m + 1
+  const lcs = new Uint16Array((n + 1) * w)
+  for (let i = n - 1; i >= 0; i--) {
+    for (let j = m - 1; j >= 0; j--) {
+      lcs[i * w + j] = a[i] === b[j] ? lcs[(i + 1) * w + j + 1] + 1 : Math.max(lcs[(i + 1) * w + j], lcs[i * w + j + 1])
+    }
+  }
+  const maskA = new Array<boolean>(n).fill(true)
+  const maskB = new Array<boolean>(m).fill(true)
+  let i = 0
+  let j = 0
+  while (i < n && j < m) {
+    if (a[i] === b[j]) {
+      maskA[i] = false
+      maskB[j] = false
+      i++
+      j++
+    } else if (lcs[(i + 1) * w + j] >= lcs[i * w + j + 1]) {
+      i++
+    } else {
+      j++
+    }
+  }
+  return { a: maskA, b: maskB }
 }

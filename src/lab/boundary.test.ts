@@ -1,72 +1,79 @@
 import { describe, expect, it } from 'vitest'
 import { generateKeypair } from '../crypto/ed25519'
-import { ALL_MUTATIONS, buildWireDoc, runBoundary, type Mutation, type SignPoint } from './boundary'
+import {
+  ALL_MUTATIONS,
+  SIGN_POINTS,
+  buildWireDoc,
+  runBoundary,
+  toSignedForm,
+  type Mutation,
+  type SignPoint,
+} from './boundary'
 
 const kp = generateKeypair()
 
+/** Which mutations each boundary tolerates (signature still verifies).
+ *  Cumulative pipeline → strictly monotone tolerance. */
+const TOLERANCE: Record<SignPoint, Mutation[]> = {
+  raw: [],
+  parse: ['whitespace', 'numberform'],
+  normalize: ['whitespace', 'numberform', 'nfd'],
+  canonical: ['whitespace', 'numberform', 'nfd', 'reorder'],
+}
+
 describe('Stage 5 — signature boundary', () => {
-  it('with no in-transit re-encoding, all three boundaries verify and read ok', () => {
-    for (const point of ['raw', 'reserialize', 'canonical'] as SignPoint[]) {
+  it('with no in-transit re-encoding, all four boundaries verify and read ok', () => {
+    for (const point of SIGN_POINTS) {
       const run = runBoundary(point, [], kp)
       expect(run.sigValid).toBe(true)
       expect(run.verdict).toBe('ok')
     }
   })
 
-  it('sign-the-raw-bytes: EVERY re-encoding breaks the signature (fail-closed, brittle)', () => {
-    for (const m of ALL_MUTATIONS) {
-      const run = runBoundary('raw', [m], kp)
-      expect(run.sigValid).toBe(false)
-      expect(run.verdict).toBe('fail-closed')
+  for (const point of SIGN_POINTS) {
+    it.each(ALL_MUTATIONS)(`boundary "${point}": mutation %s matches the tolerance matrix`, (m) => {
+      const run = runBoundary(point, [m], kp)
+      const tolerated = TOLERANCE[point].includes(m)
+      expect(run.sigValid).toBe(tolerated)
+      expect(run.verdict).toBe(tolerated ? 'ok' : 'fail-closed')
+    })
+  }
+
+  it('tolerance grows monotonically as the boundary moves down the pipeline', () => {
+    for (let i = 1; i < SIGN_POINTS.length; i++) {
+      const prev = new Set(TOLERANCE[SIGN_POINTS[i - 1]])
+      for (const m of prev) expect(TOLERANCE[SIGN_POINTS[i]]).toContain(m)
     }
   })
 
-  const reserializeMatrix: Array<[Mutation, boolean]> = [
-    ['whitespace', true], // erased by JSON.parse -> accepted without detection
-    ['numberform', true], // 1e0 -> 1 -> accepted without detection
-    ['reorder', false], // JSON.stringify preserves insertion order -> rejected
-    ['nfd', false], // parse/serialize never normalizes Unicode -> rejected
-  ]
-
-  it.each(reserializeMatrix)(
-    'parse-then-reserialize boundary: %s in transit -> signature valid = %s',
-    (mutation, expected) => {
-      const run = runBoundary('reserialize', [mutation], kp)
-      expect(run.sigValid).toBe(expected)
-      expect(run.verdict).toBe(expected ? 'ok' : 'fail-closed')
-    },
-  )
-
-  const canonicalMatrix: Array<[Mutation, boolean]> = [
-    ['whitespace', true], // erased by canonicalization
-    ['numberform', true], // canonical number spelling
-    ['reorder', true], // canonical key order
-    ['nfd', false], // JCS never normalizes Unicode -> rejected
-  ]
-
-  it.each(canonicalMatrix)(
-    'canonical (JCS) boundary: %s in transit -> signature valid = %s',
-    (mutation, expected) => {
-      const run = runBoundary('canonical', [mutation], kp)
-      expect(run.sigValid).toBe(expected)
-      expect(run.verdict).toBe(expected ? 'ok' : 'fail-closed')
-    },
-  )
-
-  it('accepted mutations really did change the wire bytes (unauthenticated surface)', () => {
-    const run = runBoundary('canonical', ['whitespace', 'numberform', 'reorder'], kp)
-    expect(run.deliveredText).not.toBe(run.originalText)
+  it('all tolerated mutations composed together still verify at the canonical tap', () => {
+    const run = runBoundary('canonical', [...ALL_MUTATIONS], kp)
+    expect(run.deliveredText).not.toBe(run.originalText) // wire bytes really changed
     expect(run.sigValid).toBe(true)
     expect(run.meaningEqual).toBe(true)
+    expect(run.verdict).toBe('ok')
   })
 
-  it('mutations compose: whitespace+numberform pass the reserialize boundary together', () => {
-    const run = runBoundary('reserialize', ['whitespace', 'numberform'], kp)
+  it('whitespace+numberform compose at the parse tap', () => {
+    const run = runBoundary('parse', ['whitespace', 'numberform'], kp)
     expect(run.sigValid).toBe(true)
     expect(run.verdict).toBe('ok')
   })
 
   it('buildWireDoc with no mutations is the producer document, byte for byte', () => {
     expect(buildWireDoc(new Set())).toBe('{"amount":1,"payee":"café"}')
+  })
+
+  it('the pipeline is strict: duplicate keys fail closed at every non-raw tap', () => {
+    for (const point of ['parse', 'normalize', 'canonical'] as SignPoint[]) {
+      expect(() => toSignedForm('{"a":1,"a":2}', point)).toThrow(/duplicate/)
+    }
+  })
+
+  it('normalize tap derives NFC: both é spellings produce the same signed form', () => {
+    const nfc = '{"payee":"café"}'
+    const nfd = '{"payee":"café"}'
+    expect(toSignedForm(nfc, 'normalize')).toBe(toSignedForm(nfd, 'normalize'))
+    expect(toSignedForm(nfc, 'parse')).not.toBe(toSignedForm(nfd, 'parse'))
   })
 })

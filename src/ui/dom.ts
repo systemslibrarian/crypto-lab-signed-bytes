@@ -1,4 +1,4 @@
-import { diffMask, toHex } from '../core/bytes'
+import { byteDiffMasks, toHex } from '../core/bytes'
 import { sha256Hex } from '../core/hash'
 import type { Verdict } from '../lab/stages'
 
@@ -73,15 +73,17 @@ function hexLines(bytes: Uint8Array, mask: boolean[]): HTMLElement[] {
   return lines
 }
 
-/** Side-by-side hex of two byte strings with differing bytes marked (color +
- *  bold + underline), SHA-256 of each, and a text summary of the diff. */
+/** Side-by-side hex of two byte strings with unmatched bytes marked (color +
+ *  bold + underline; alignment-aware, so an insertion highlights only itself),
+ *  SHA-256 of each, and a text summary of the diff. */
 export function hexDiffView(labelA: string, a: Uint8Array, labelB: string, b: Uint8Array): HTMLElement {
-  const mask = diffMask(a, b)
-  const nDiff = mask.filter(Boolean).length
+  const masks = byteDiffMasks(a, b)
+  const nA = masks.a.filter(Boolean).length
+  const nB = masks.b.filter(Boolean).length
   const hashA = sha256Hex(a)
   const hashB = sha256Hex(b)
   const same = hashA === hashB
-  const box = (label: string, bytes: Uint8Array, hash: string) =>
+  const box = (label: string, bytes: Uint8Array, mask: boolean[], hash: string) =>
     h(
       'div',
       {},
@@ -92,7 +94,7 @@ export function hexDiffView(labelA: string, a: Uint8Array, labelB: string, b: Ui
   return h(
     'div',
     {},
-    h('div', { class: 'hexpair' }, box(labelA, a, hashA), box(labelB, b, hashB)),
+    h('div', { class: 'hexpair' }, box(labelA, a, masks.a, hashA), box(labelB, b, masks.b, hashB)),
     h(
       'p',
       { class: 'hexcaption' },
@@ -101,7 +103,7 @@ export function hexDiffView(labelA: string, a: Uint8Array, labelB: string, b: Ui
         : h(
             'span',
             { class: 'digest' },
-            h('span', { class: 'match-no' }, `✗ ${nDiff} of ${Math.max(a.length, b.length)} byte positions differ`),
+            h('span', { class: 'match-no' }, `✗ byte strings differ — ${nA} unmatched byte${nA === 1 ? '' : 's'} left, ${nB} right`),
             ' — the SHA-256 digests do not match.',
           ),
     ),

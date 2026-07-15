@@ -11,12 +11,12 @@ Everything cryptographic is real and runs in the browser; keys are generated per
 ## Exhibits
 
 1. **One document, two byte strings** — a button-driven step-through of the headline mechanism: a producer signs an invoice's exact UTF-8 bytes, a well-meaning gateway re-serializes it in transit, and the real verifier rejects it. Hex diff and diverging SHA-256 digests are computed live at each step.
-2. **Byte-diff sandbox** — two editable JSON documents; see parsed-meaning equality, UTF-8 hex diff, SHA-256 divergence, and a sign-left/verify-right run against the real primitive.
+2. **Byte-diff sandbox** — two editable JSON documents; see parsed-meaning equality, an alignment-aware UTF-8 hex diff (an inserted byte highlights itself, not everything after it), SHA-256 divergence, and a sign-left/verify-right run against the real primitive.
 3. **Stage 1: key order** — sign `{"a":1,"b":2}`, verify `{"b":2,"a":1}`; watch it fail closed, then watch JCS repair it.
 4. **Stage 2: Unicode** — precomposed é (U+00E9) vs e + combining acute (U+0301): identical rendering, different bytes, code-point strips, three modes (no normalization / NFC before signing repairs it / normalization *after* signing breaks a genuine signature). JCS explicitly does **not** fix this — RFC 8785 never alters code points.
 5. **Stage 3: duplicate keys (the centerpiece)** — craft `{"role":"user","role":"admin"}`; the signature over the exact bytes stays valid throughout, the verifier's first-wins parser authorizes `"user"`, the application's last-wins parser acts on `"admin"`: valid signature, red ALARM. With JCS the document is *rejected at parse time* (I-JSON) — canonicalization refuses the ambiguity rather than resolving it.
 6. **Stage 4: number spellings** — `1`, `1.0`, `1e0`, `1.0000000000000001` (plus your own): every spelling is a different byte string, every one parses to exactly the same float64, and only the round-trip-stable spelling keeps its signature. Expert notes cover what JCS numbers do and don't preserve.
-7. **Stage 5: the signature boundary** — choose where the signature attaches (raw bytes / after parse+re-serialize / after JCS) and flip on in-transit re-encodings; the pipeline shows which byte surfaces become attacker-writable without detection and which break for every honest middlebox.
+7. **Stage 5: the signature boundary** — a drawn receive pipeline (wire bytes → parse → NFC normalize → JCS serialize) with a draggable slider that moves the signature tap between its four stages. Flip on in-transit re-encodings and watch the real verifier's tolerance grow monotonically as the boundary moves — then read the full 4×4 tolerance matrix, every cell of which is a live sign/verify run. What the signature no longer notices is attacker-writable without detection; what it still notices breaks for every honest middlebox too.
 8. **The tally** — a scoreboard computed by actually re-running every stage with JCS on: it fixes key order and number form; it does not fix Unicode composition; it refuses duplicate keys instead of canonicalizing them.
 
 A global **JCS toggle** re-runs every stage live with RFC 8785 canonicalization applied before signing and before verifying.
@@ -70,11 +70,11 @@ npm run test:a11y  # axe-core WCAG 2.1 AA gate (both themes), needs the build
 
 ## Build & Verify
 
-- **112 Vitest tests**, all executed in CI before deploy, including:
+- **128 Vitest tests**, all executed in CI before deploy, including:
   - **RFC 8032 §7.1 known-answer tests** — 4 vectors (TEST 1, 2, 3, SHA(abc)): seed → public key, deterministic signature bytes, and verification (12 test cases).
   - **RFC 8785 known-answer tests** — all 24 Appendix B number-serialization samples (IEEE-754 bits → canonical text) plus NaN/Infinity rejection; the §3.2.2 sample document canonicalized byte-for-byte; the §3.2.3 Unicode key-sorting example (UTF-16 code-unit order, emoji-before-U+FB33 included).
   - Hand-rolled parser: strict-grammar rejection suite and all three duplicate-key policies.
-  - Stage logic: every verdict in the UI (fail-closed, repaired-by-JCS, the valid-signature ALARM, the Stage 5 boundary matrix) is asserted against the real primitives.
+  - Stage logic: every verdict in the UI (fail-closed, repaired-by-JCS, the valid-signature ALARM) is asserted against the real primitives, and the entire Stage 5 tolerance matrix — all 16 boundary×mutation cells plus its monotonicity — is tested.
 - **Accessibility gate**: `@axe-core/playwright` scans the production build in **both** themes for WCAG 2.1 A/AA; violations block the GitHub Pages deploy (`.github/workflows/deploy.yml`).
 - Hand-rolled teaching parts: `src/jcs/canonicalize.ts` (RFC 8785) and `src/json/parse.ts` (RFC 8259 + duplicate policies). Library crypto: `@noble/ed25519` + `@noble/hashes` — the signature scheme is not the lesson here, the bytes it binds are.
 

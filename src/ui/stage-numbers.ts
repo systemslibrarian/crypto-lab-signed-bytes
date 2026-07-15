@@ -70,8 +70,8 @@ export function mountStageNumbers(root: HTMLElement, ctx: LabCtx): void {
         'p',
         { class: 'verdict-note' },
         jcs
-          ? 'With JCS on, both ends sign and verify the canonical spelling (ECMAScript shortest-round-trip form), so every row verifies: the signature now binds the number VALUE as float64 recovers it, not the spelling. Note what was given up: 1.0000000000000001 was already indistinguishable from 1 to every float64 parser — canonicalization just makes the signature agree with that loss instead of fighting it.'
-          : 'Every spelling of the same float64 is a different byte string, and only the spelling that survives the round-trip verbatim ("1") keeps its signature. The application-recovered VALUE is identical in every row — each rejection is fail-closed friction, not a security save. And 1.0000000000000001 is the sharpest case: JSON-the-text distinguishes it from 1, float64 cannot.',
+          ? 'With JCS on, every row verifies: both ends sign the canonical spelling, so the signature binds the number VALUE as float64 recovers it, not the spelling. What was given up — the 1.0000000000000001 vs 1 distinction — was already invisible to every float64 parser; canonicalization just stops the signature fighting that loss.'
+          : 'Every spelling of the same float64 is a different byte string, and only the one that survives the round-trip verbatim ("1") keeps its signature. Each rejection is fail-closed friction, not a security save — the application-recovered VALUE is identical in every row.',
       ),
     )
   }

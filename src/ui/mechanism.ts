@@ -4,14 +4,22 @@ import { chips, h, hexDiffView, liveRegion, mono, sigLine } from './dom'
 import type { LabCtx } from './context'
 
 /**
- * Exhibit 1 — the headline mechanism, shown as a step-through (never asserted
- * in prose): producer signs exact bytes → gateway re-serializes → verifier
- * rejects. All values on screen come from the real signer/verifier at click
- * time; the only motion is step reveal driven by the learner's button.
+ * Exhibit 1 — the headline mechanism, shown (never asserted): producer signs
+ * exact bytes → gateway re-serializes → verifier rejects. A pipeline diagram
+ * tracks where the message is; the packet moves and the changed bytes pulse
+ * exactly once per learner click. All values come from the real signer and
+ * verifier at click time; there is no idle motion.
  */
 export function mountMechanism(root: HTMLElement, ctx: LabCtx): void {
   const producerDoc = '{"amount": 1.0, "currency": "USD"}'
   const gatewayDoc = JSON.stringify(JSON.parse(producerDoc)) // {"amount":1,"currency":"USD"}
+
+  // The diagram is an illustration of the steps (which carry the content).
+  const nodeProducer = h('div', { class: 'mech-node' }, 'Producer (signs)')
+  const nodeGateway = h('div', { class: 'mech-node' }, 'Gateway (re-serializes)')
+  const nodeVerifier = h('div', { class: 'mech-node' }, 'Verifier (checks bytes)')
+  const packet = h('span', { class: 'mech-packet' }, '● bytes')
+  const diagram = h('div', { class: 'mech-diagram at-producer', 'aria-hidden': 'true' }, nodeProducer, nodeGateway, nodeVerifier, packet)
 
   const stepsHost = liveRegion('Mechanism walkthrough steps')
   const nextBtn = h('button', { class: 'primary', type: 'button' }, 'Start the walkthrough')
@@ -19,6 +27,15 @@ export function mountMechanism(root: HTMLElement, ctx: LabCtx): void {
 
   let steps: HTMLElement[] = []
   let shown = 0
+
+  function setDiagram(step: number): void {
+    diagram.classList.remove('at-producer', 'at-gateway', 'at-verifier')
+    diagram.classList.add(step <= 2 ? 'at-producer' : step === 3 ? 'at-gateway' : 'at-verifier')
+    nodeProducer.classList.toggle('active', step <= 2)
+    nodeGateway.classList.toggle('active', step === 3)
+    nodeVerifier.classList.toggle('active', step === 4)
+    nodeVerifier.classList.toggle('rejecting', step === 4)
+  }
 
   function build(): void {
     const signedBytes = utf8Encode(producerDoc)
@@ -57,21 +74,29 @@ export function mountMechanism(root: HTMLElement, ctx: LabCtx): void {
         chips(
           sigValid,
           sigValid ? 'ok' : 'fail-closed',
-          'The verifier rejected the delivered bytes. Nothing was forged and nothing wrong was accepted — the primitive held perfectly. What failed is the system around it: two honest parties who agree about the object no longer agree about the bytes. Every "invalid signature" bug of this shape is an availability failure caused by an encoding, not an attack.',
+          'The verifier rejected the delivered bytes. Nothing was forged and nothing wrong was accepted — the primitive held perfectly. What failed is the system around it: two honest parties who agree about the object no longer agree about the bytes.',
         ),
       ),
     ]
     stepsHost.replaceChildren(...steps)
     shown = 0
+    setDiagram(1)
   }
 
   nextBtn.addEventListener('click', () => {
     if (shown === 0) build()
     if (shown < steps.length) {
-      steps[shown].removeAttribute('hidden')
+      const step = steps[shown]
+      step.removeAttribute('hidden')
       shown++
+      setDiagram(shown)
+      if (shown === 3) {
+        // one-shot pulse on the changed bytes, then remove the hook
+        step.classList.add('pulse-once')
+        setTimeout(() => step.classList.remove('pulse-once'), 700)
+      }
     }
-    nextBtn.textContent = shown === 0 ? 'Start the walkthrough' : shown < steps.length ? 'Next step' : 'Done — walkthrough complete'
+    nextBtn.textContent = shown < steps.length ? 'Next step' : 'Done — walkthrough complete'
     if (shown >= steps.length) {
       nextBtn.setAttribute('disabled', '')
       resetBtn.removeAttribute('hidden')
@@ -84,5 +109,6 @@ export function mountMechanism(root: HTMLElement, ctx: LabCtx): void {
     resetBtn.setAttribute('hidden', '')
   })
 
-  root.append(h('div', { class: 'row' }, nextBtn, resetBtn), stepsHost)
+  root.append(diagram, h('div', { class: 'row' }, nextBtn, resetBtn), stepsHost)
+  setDiagram(0)
 }
