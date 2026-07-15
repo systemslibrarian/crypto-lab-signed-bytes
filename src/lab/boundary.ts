@@ -23,7 +23,13 @@ import { canonicalize } from '../jcs/canonicalize'
 import { parseJson, type JsonValue } from '../json/parse'
 import { E_ACUTE_NFC, E_ACUTE_NFD, type Verdict } from './stages'
 
+// [extension] point: the likely next exhibit is a deterministic-CBOR (RFC 8949
+// §4.2 / COSE) tap for comparison — add a SignPoint here and a SIGN_POINT_INFO
+// entry; toSignedForm() is the only other place that must learn the encoding.
 export type SignPoint = 'raw' | 'parse' | 'normalize' | 'canonical'
+// [extension] point: new in-transit re-encodings (e.g. string escape respelling
+// "é" ↔ literal é) slot in as a Mutation + MUTATION_INFO entry + one
+// branch in buildWireDoc; the matrix and tests pick them up automatically.
 export type Mutation = 'whitespace' | 'numberform' | 'nfd' | 'reorder'
 
 export const SIGN_POINTS: SignPoint[] = ['raw', 'parse', 'normalize', 'canonical']

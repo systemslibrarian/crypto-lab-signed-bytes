@@ -19,6 +19,10 @@ export interface JsonObject {
   [key: string]: JsonValue
 }
 
+// [extension] point: further real-world parser policies (e.g. comment
+// tolerance, lone-surrogate rejection, bigint numbers) extend this union and
+// the corresponding branches in parseJson — Stage 3's two-view comparison
+// works for any pair of policies.
 export type DuplicatePolicy = 'first' | 'last' | 'reject'
 
 export interface DuplicateReport {
