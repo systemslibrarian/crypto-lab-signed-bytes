@@ -1,9 +1,15 @@
-import { runNumberForm } from '../lab/stages'
+import { runNumberForm, type Verdict } from '../lab/stages'
 import { serializeNumber } from '../jcs/canonicalize'
 import { h, liveRegion } from './dom'
 import type { LabCtx } from './context'
 
 const DEFAULT_FORMS = ['1', '1.0', '1e0', '1.0000000000000001']
+
+const VERDICT_CELL: Record<Verdict, { cls: string; text: string }> = {
+  ok: { cls: 'cell-ok', text: '✓ OK' },
+  'fail-closed': { cls: 'cell-no', text: '⛔ FAIL-CLOSED' },
+  alarm: { cls: 'cell-no', text: '⚠ ALARM' },
+}
 
 /**
  * Stage 4 — number spellings. Each row runs the real pipeline: sign the raw
@@ -27,13 +33,10 @@ export function mountStageNumbers(root: HTMLElement, ctx: LabCtx): void {
         h('td', {}, h('code', {}, String(res.roundTripped))),
         h('td', {}, changed ? h('span', { class: 'cell-no' }, '✗ rewritten') : h('span', { class: 'cell-ok' }, '✓ unchanged')),
         h('td', {}, res.sigValid ? h('span', { class: 'cell-ok' }, 'valid ✓') : h('span', {}, 'invalid ✗')),
-        h(
-          'td',
-          {},
-          res.verdict === 'ok'
-            ? h('span', { class: 'cell-ok' }, '✓ OK')
-            : h('span', { class: 'cell-no' }, '⛔ FAIL-CLOSED'),
-        ),
+        // Rendered from res.verdict itself, not from a two-way guess: an
+        // 'alarm' must never be printed as FAIL-CLOSED just because this stage
+        // is not expected to produce one.
+        h('td', {}, h('span', { class: VERDICT_CELL[res.verdict].cls }, VERDICT_CELL[res.verdict].text)),
       ]
     } catch (e) {
       cells = [

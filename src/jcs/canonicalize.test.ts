@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { canonicalize, canonicalizeText, compareKeys, serializeNumber, serializeString } from './canonicalize'
 
-// NOTE: this file is deliberately ASCII-only; every non-ASCII or control
-// character appears as a TypeScript \u escape so the test data is auditable
-// byte-for-byte against the RFC text.
+// NOTE: every string LITERAL in this file is deliberately ASCII-only — each
+// non-ASCII code point, C0 control, and DEL appears as a TypeScript \u escape
+// so the test data is auditable byte-for-byte against the RFC text. (Prose in
+// comments and test names is ordinary text; only the data is escaped.) This
+// matters most for the NFC/NFD pair below, which is invisible when written
+// literally.
 
 function doubleFromHex(hex: string): number {
   const dv = new DataView(new ArrayBuffer(8))
@@ -64,12 +67,14 @@ describe('JCS end-to-end — RFC 8785 §3.2.2/§3.2.3 sample document', () => {
     '}',
   ].join('\n')
 
-  // Verbatim §3.2.3 expected output: the euro sign is a literal code point,
-  // the remaining escapes (, \n, \", \\) are JSON escapes.
+  // Verbatim §3.2.3 expected output. JCS emits the euro sign as a literal code
+  // point (written here as the TypeScript escape \u20ac, so the expected string
+  // really does contain U+20AC, not a six-character JSON escape); the remaining
+  // \u000f, \n, \" and \\ ARE JSON escapes inside the canonical text.
   const expected =
     '{"literals":[null,true,false],' +
     '"numbers":[333333333.3333333,1e+30,4.5,0.002,1e-27],' +
-    '"string":"€$\\u000f\\nA\'B\\"\\\\\\\\\\"/"}'
+    '"string":"\u20ac$\\u000f\\nA\'B\\"\\\\\\\\\\"/"}'
 
   it('canonicalizes the spec sample byte-for-byte', () => {
     expect(canonicalizeText(input)).toBe(expected)
@@ -98,16 +103,16 @@ describe('JCS property sorting — RFC 8785 §3.2.3 UTF-16 code-unit order', () 
     expect(canonicalizeText(input)).toBe(
       '{"\\r":"Carriage Return",' +
         '"1":"One",' +
-        '"":"Control",' +
-        '"ö":"Latin Small Letter O With Diaeresis",' +
-        '"€":"Euro Sign",' +
-        '"😀":"Emoji: Grinning Face",' +
-        '"דּ":"Hebrew Letter Dalet With Dagesh"}',
+        '"\u0080":"Control",' +
+        '"\u00f6":"Latin Small Letter O With Diaeresis",' +
+        '"\u20ac":"Euro Sign",' +
+        '"\ud83d\ude00":"Emoji: Grinning Face",' +
+        '"\ufb33":"Hebrew Letter Dalet With Dagesh"}',
     )
   })
 
   it('sorts a surrogate pair (emoji, U+1F600) BEFORE U+FB33 — UTF-16 units, not code points', () => {
-    expect(compareKeys('😀', 'דּ')).toBeLessThan(0)
+    expect(compareKeys('\ud83d\ude00', '\ufb33')).toBeLessThan(0)
   })
 })
 
@@ -117,16 +122,16 @@ describe('JCS strings — §3.2.2.2 escaping rules', () => {
   })
 
   it('escapes remaining C0 controls as lowercase \\u00xx', () => {
-    expect(serializeString('')).toBe('"\\u000b"')
-    expect(serializeString('')).toBe('"\\u001f"')
+    expect(serializeString('\u000b')).toBe('"\\u000b"')
+    expect(serializeString('\u001f')).toBe('"\\u001f"')
   })
 
   it('leaves DEL (U+007F) and forward slash unescaped', () => {
-    expect(serializeString('/')).toBe('"/"')
+    expect(serializeString('\u007f/')).toBe('"\u007f/"')
   })
 
   it('emits non-ASCII literally (no \\u escaping of the euro sign or emoji)', () => {
-    expect(serializeString('€😀')).toBe('"€😀"')
+    expect(serializeString('\u20ac\ud83d\ude00')).toBe('"\u20ac\ud83d\ude00"')
   })
 })
 
@@ -144,8 +149,8 @@ describe('JCS input discipline (I-JSON, RFC 7493)', () => {
   })
 
   it('does NOT Unicode-normalize string content (NFD stays NFD)', () => {
-    const nfd = 'café'
-    const nfc = 'café'
+    const nfd = 'cafe\u0301'
+    const nfc = 'caf\u00e9'
     expect(canonicalize(nfd)).toBe('"' + nfd + '"')
     expect(canonicalize(nfd)).not.toBe(canonicalize(nfc))
   })

@@ -185,12 +185,17 @@ export function runDuplicates(text: string, kp: Keypair, useJcs: boolean): Dupli
     }
     // No duplicates present: JCS passes it through like any other doc.
     const run = signVerify(canon, canon, kp)
+    const verifierView = recoveredMeaning(canon, 'first')
+    const applicationView = recoveredMeaning(canon, 'last')
     return {
       ...run,
-      verdict: 'ok',
+      // Derived, never asserted: the verifier's own answer decides, and the
+      // two parser views are compared even though canonical I-JSON cannot
+      // make them differ. If either ever stopped holding, the light changes.
+      verdict: verdictFor(run, verifierView === applicationView),
       jcs: true,
-      verifierView: recoveredMeaning(canon, 'first'),
-      applicationView: recoveredMeaning(canon, 'last'),
+      verifierView,
+      applicationView,
       duplicateKeys: [],
     }
   }
