@@ -114,7 +114,6 @@ body {
   text-decoration-thickness: 2px;
 }
 
-/* BEGIN cl-hero standard — managed, keep in sync across fleet */
 .cl-hero {
   display: flex;
   align-items: flex-start;
@@ -174,8 +173,11 @@ body {
     flex-basis: auto;
     width: 100%;
   }
+  .cl-hero-main {
+    flex-basis: auto;
+    min-width: 0;
+  }
 }
-/* END cl-hero standard */
 
 /* ---------------------------------------------------------------- controls */
 #app button {
@@ -698,4 +700,16 @@ body {
   color: var(--text-dim);
   font-size: 0.9rem;
   text-align: center;
+}
+
+
+/* Comfortable tap targets on touch devices without bulking up the mouse UI. */
+@media (pointer: coarse) {
+  #app button,
+  #app select,
+  #app input[type="text"],
+  #app input[type="number"],
+  #app summary {
+    min-height: 44px;
+  }
 }
