@@ -10,6 +10,7 @@
   --panel: #1e1a16;
   --panel-soft: #262119;
   --border: #3a332c;
+  --control-border: #796b5e;
   --text: #ede7e1;
   --text-dim: #b5aca2;
   --ok: #2f9e68;
@@ -29,6 +30,7 @@
   --panel: #ffffff;
   --panel-soft: #f3ede6;
   --border: #d8ccbf;
+  --control-border: #88796b;
   --text: #241f1a;
   --text-dim: #5b5248;
   --ok: #1a7d4f;
@@ -211,7 +213,7 @@ body {
   font-size: 0.88rem;
   color: var(--text);
   background: var(--panel-soft);
-  border: 1px solid var(--border);
+  border: 1px solid var(--control-border);
   border-radius: 8px;
   padding: 0.5rem 0.6rem;
   width: 100%;
@@ -224,7 +226,7 @@ body {
   font-size: 0.9rem;
   color: var(--text);
   background: var(--panel-soft);
-  border: 1px solid var(--border);
+  border: 1px solid var(--control-border);
   border-radius: 8px;
   padding: 0.4rem 0.6rem;
 }
