@@ -52,22 +52,28 @@ export function mountStageNumbers(root: HTMLElement, ctx: LabCtx): void {
     const jcs = ctx.jcs()
     out.replaceChildren(
       h(
-        'table',
-        {},
+        'div',
+        // A scrollable region must be keyboard-reachable (2.1.1); the focus
+        // ring for it is in style.css. `group` supports the accessible name.
+        { class: 'table-scroll', tabindex: '0', role: 'group', 'aria-label': 'Numeric form comparison' },
         h(
-          'thead',
+          'table',
           {},
           h(
-            'tr',
+            'thead',
             {},
-            h('th', { scope: 'col' }, 'Producer signs'),
-            h('th', { scope: 'col' }, 'After one parse/re-serialize hop'),
-            h('th', { scope: 'col' }, 'Byte spelling'),
-            h('th', { scope: 'col' }, 'Signature (Ed25519)'),
-            h('th', { scope: 'col' }, 'Verdict'),
+            h(
+              'tr',
+              {},
+              h('th', { scope: 'col' }, 'Producer signs'),
+              h('th', { scope: 'col' }, 'After one parse/re-serialize hop'),
+              h('th', { scope: 'col' }, 'Byte spelling'),
+              h('th', { scope: 'col' }, 'Signature (Ed25519)'),
+              h('th', { scope: 'col' }, 'Verdict'),
+            ),
           ),
+          h('tbody', {}, ...forms.map(row)),
         ),
-        h('tbody', {}, ...forms.map(row)),
       ),
       h(
         'p',

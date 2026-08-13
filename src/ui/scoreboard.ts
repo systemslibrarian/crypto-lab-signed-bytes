@@ -113,7 +113,7 @@ export function mountScoreboard(root: HTMLElement, ctx: LabCtx): void {
       ),
     )
     root.replaceChildren(
-      h('div', { class: 'hexbox', tabindex: '0', role: 'region', 'aria-label': 'JCS repair scoreboard', style: 'max-height:none; overflow:auto' }, table),
+      h('div', { class: 'hexbox', tabindex: '0', role: 'group', 'aria-label': 'JCS repair scoreboard', style: 'max-height:none; overflow:auto' }, table),
       h(
         'p',
         { class: 'verdict-note' },

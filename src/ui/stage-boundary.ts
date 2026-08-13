@@ -123,7 +123,7 @@ export function mountStageBoundary(root: HTMLElement, ctx: LabCtx): void {
         { class: 'dim' },
         'Each cell is a real sign/verify run: the mutation is applied in transit and the signature is checked at that row’s tap. Reading down a column: the boundary where a re-encoding stops breaking things is the boundary where it becomes invisible.',
       ),
-      h('div', { class: 'hexbox', tabindex: '0', role: 'region', 'aria-label': 'Boundary tolerance matrix', style: 'max-height:none' }, table),
+      h('div', { class: 'hexbox', tabindex: '0', role: 'group', 'aria-label': 'Boundary tolerance matrix', style: 'max-height:none' }, table),
     )
   }
 

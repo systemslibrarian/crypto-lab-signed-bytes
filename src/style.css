@@ -22,6 +22,17 @@
   --focus: #f0955f;
 }
 
+/* WCAG 1.4.10. This lab never got the box-sizing reset its siblings have — the
+   only `box-sizing: border-box` in the file was inside one textarea rule. So
+   every element combining `width: 100%` with padding or a border overflowed its
+   container by exactly that padding, and at 380px the document measured 401px:
+   380 plus the shell's own horizontal padding. Measured before/after: 401 -> 380. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 :root[data-theme='light'] {
   color-scheme: light;
   --accent: #c2410c;
@@ -104,7 +115,14 @@ body {
 }
 #app code {
   background: var(--panel-soft);
-  border: 1px solid var(--border);
+  /* --control-border, not --border. `--panel-soft` sits within ~1.1:1 of the
+     panel behind it, so the border is what says "this is a control" — the exact
+     case SC 1.4.11 covers. `--border` is the surface-divider token and measured
+     1.39:1 (dark) / 1.58:1 (light) against the button's own fill. This palette
+     already defined --control-border in BOTH themes (#796b5e / #88796b); it had
+     simply never been applied to a button. It stays correct on `#app section`
+     and `#app code`, which are surface rules with no such floor. */
+  border: 1px solid var(--control-border);
   border-radius: 5px;
   padding: 0 0.3em;
 }
@@ -188,7 +206,14 @@ body {
   font-weight: 600;
   color: var(--text);
   background: var(--panel-soft);
-  border: 1px solid var(--border);
+  /* --control-border, not --border. `--panel-soft` sits within ~1.1:1 of the
+     panel behind it, so this border is what says "a control is here" — exactly
+     the case SC 1.4.11 covers. `--border` is the surface-divider token and
+     measured 1.39:1 dark / 1.58:1 light. The palette already defined
+     --control-border in BOTH themes (#796b5e / #88796b) and had never applied it
+     to a button. It stays correct on `#app section` and `#app code`, which are
+     surface rules with no such floor. */
+  border: 1px solid var(--control-border);
   border-radius: 8px;
   padding: 0.45rem 0.9rem;
   cursor: pointer;
@@ -197,7 +222,7 @@ body {
   border-color: var(--accent-text);
 }
 #app button.primary {
-  border-color: color-mix(in oklab, var(--accent) 55%, var(--border));
+  border-color: color-mix(in oklab, var(--accent) 55%, var(--control-border));
   background: color-mix(in oklab, var(--accent) 14%, var(--panel-soft));
 }
 #app button:focus-visible,
@@ -450,6 +475,26 @@ body {
   border-collapse: collapse;
   width: 100%;
   font-size: 0.88rem;
+}
+
+/* WCAG 1.4.10. `width: 100%` does NOT stop a table overflowing: the table's
+   min-content width is set by its cells, and a table whose columns cannot
+   compress below that pushes the document sideways regardless of the declared
+   width. Measured at 380px: a 542px table took the document to 576px, at first
+   paint, before any interaction.
+
+   `display: block` + `overflow-x: auto` makes the table its own scroller, so it
+   scrolls instead of the page. `tabindex` is added in markup where these are
+   built, because a scrollable region has to be reachable by keyboard (2.1.1) —
+   and anything focusable needs a visible focus ring (2.4.7), below. */
+#app .table-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+#app .table-scroll:focus-visible {
+  outline: 3px solid var(--accent-text);
+  outline-offset: 2px;
 }
 #app th,
 #app td {

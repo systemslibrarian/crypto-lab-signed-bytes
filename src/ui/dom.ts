@@ -88,7 +88,7 @@ export function hexDiffView(labelA: string, a: Uint8Array, labelB: string, b: Ui
       'div',
       {},
       h('p', { class: 'hexcaption' }, `${label} — ${bytes.length} bytes (UTF-8)`),
-      h('div', { class: 'hexbox', tabindex: '0', role: 'region', 'aria-label': `${label} bytes in hexadecimal` }, ...hexLines(bytes, mask)),
+      h('div', { class: 'hexbox', tabindex: '0', role: 'group', 'aria-label': `${label} bytes in hexadecimal` }, ...hexLines(bytes, mask)),
       h('p', { class: 'digest' }, 'SHA-256: ', h('span', {}, hash.slice(0, 32) + '…')),
     )
   return h(
