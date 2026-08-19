@@ -14,7 +14,7 @@
     "ci": "npm run typecheck && npm test && npm run build && npm run test:a11y"
   },
   "dependencies": {
-    "@noble/ed25519": "^2.3.0",
+    "@noble/ed25519": "^3.1.0",
     "@noble/hashes": "^1.8.0"
   },
   "devDependencies": {
