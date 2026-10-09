@@ -45,6 +45,10 @@ export function serializeString(s: string): string {
   let out = '"'
   for (const unit of s) {
     // `for..of` iterates code points; surrogate pairs pass through intact.
+    const point = unit.codePointAt(0)!
+    if (point >= 0xd800 && point <= 0xdfff) {
+      throw new RangeError('JCS rejects lone Unicode surrogates (RFC 8785 §3.2.2.2)')
+    }
     const short = SHORT_ESCAPES[unit]
     if (short !== undefined) {
       out += short

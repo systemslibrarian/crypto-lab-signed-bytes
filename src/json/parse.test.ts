@@ -37,6 +37,21 @@ describe('strict JSON parsing (RFC 8259)', () => {
 })
 
 describe('duplicate-key policy (RFC 8259 §4 leaves this implementation-defined)', () => {
+  it('preserves special member names as own JSON data without changing the prototype', () => {
+    const value = parseJson('{"__proto__":{"n":1},"constructor":2,"toString":3}').value;
+    expect(Object.getPrototypeOf(value)).toBe(Object.prototype);
+    expect(Object.prototype.hasOwnProperty.call(value, '__proto__')).toBe(true);
+    expect(JSON.stringify(value)).toBe('{"__proto__":{"n":1},"constructor":2,"toString":3}');
+    expect(Object.prototype).not.toHaveProperty('n');
+  });
+
+  it('applies all duplicate policies to special member names', () => {
+    const special = '{"__proto__":1,"__proto__":2}';
+    expect(JSON.stringify(parseJson(special, 'first').value)).toBe('{"__proto__":1}');
+    expect(JSON.stringify(parseJson(special, 'last').value)).toBe('{"__proto__":2}');
+    expect(() => parseJson(special, 'reject')).toThrow(/duplicate/);
+  });
+
   const doc = '{"role":"user","role":"admin"}'
 
   it("'first' keeps the first occurrence (some validators)", () => {

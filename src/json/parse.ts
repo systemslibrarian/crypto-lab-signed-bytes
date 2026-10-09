@@ -101,7 +101,9 @@ export function parseJson(text: string, policy: DuplicatePolicy = 'reject'): Par
         if (policy === 'last') obj[key] = value
         // 'first': discard the later value
       } else {
-        obj[key] = value
+        // JSON member names are data, including "__proto__". Assignment to an
+        // inherited setter would change the prototype and silently drop data.
+        Object.defineProperty(obj, key, { value, enumerable: true, writable: true, configurable: true })
       }
       skipWs()
       if (text[i] === ',') {

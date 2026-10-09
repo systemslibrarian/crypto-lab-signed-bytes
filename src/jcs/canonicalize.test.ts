@@ -136,6 +136,20 @@ describe('JCS strings — §3.2.2.2 escaping rules', () => {
 })
 
 describe('JCS input discipline (I-JSON, RFC 7493)', () => {
+  it.each(['\ud800', '\udbff', '\udc00', '\udfff', '\udc00\ud800', '\ud800x', 'x\udfff'])('rejects lone surrogate content and property names %#', (value) => {
+    expect(() => serializeString(value)).toThrow(/lone.*surrogate/i);
+    expect(() => canonicalize({ nested: [value] })).toThrow(/surrogate/i);
+    expect(() => canonicalize({ [value]: 1 })).toThrow(/surrogate/i);
+    expect(() => canonicalizeText(JSON.stringify(value))).toThrow(/surrogate/i);
+    expect(() => canonicalizeText(JSON.stringify({ [value]: 1 }))).toThrow(/surrogate/i);
+  });
+
+  it('preserves valid surrogate pairs, NFC/NFD distinctions and special JSON member names', () => {
+    expect(canonicalizeText('"\\ud834\\udd1e\\ud83d\\ude00"')).toBe('"\ud834\udd1e\ud83d\ude00"');
+    expect(canonicalizeText('{"__proto__":{"n":1},"x":2}')).toBe('{"__proto__":{"n":1},"x":2}');
+    expect(canonicalizeText('{"__proto__":null}')).toBe('{"__proto__":null}');
+  });
+
   it('rejects documents with duplicate member names at parse time', () => {
     expect(() => canonicalizeText('{"role":"user","role":"admin"}')).toThrow(/duplicate/)
   })
