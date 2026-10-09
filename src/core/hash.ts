@@ -1,4 +1,4 @@
-import { sha256 } from '@noble/hashes/sha256'
+import { sha256 } from '@noble/hashes/sha2.js'
 import { toHex } from './bytes'
 
 /** SHA-256 of a byte string, hex-encoded. Used by the byte-diff viewer to show

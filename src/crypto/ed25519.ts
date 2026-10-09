@@ -14,10 +14,10 @@
  * sibling demo crypto-lab-ed25519-forge explores the ZIP215 divergence.
  */
 import * as ed from '@noble/ed25519'
-import { sha512 } from '@noble/hashes/sha512'
+import { sha512 } from '@noble/hashes/sha2.js'
 
-// noble v2 ships no hash; wire the sync API to @noble/hashes SHA-512.
-ed.etc.sha512Sync = (...m) => sha512(ed.etc.concatBytes(...m))
+// Noble v3 keeps the synchronous hash in hashes; strict verification is unchanged.
+ed.hashes.sha512 = sha512
 
 export interface Keypair {
   secretKey: Uint8Array
@@ -25,7 +25,7 @@ export interface Keypair {
 }
 
 export function generateKeypair(): Keypair {
-  const secretKey = ed.utils.randomPrivateKey()
+  const secretKey = ed.utils.randomSecretKey()
   return { secretKey, publicKey: ed.getPublicKey(secretKey) }
 }
 
