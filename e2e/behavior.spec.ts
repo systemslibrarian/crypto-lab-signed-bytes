@@ -11,6 +11,35 @@ test.beforeEach(async ({ page }) => {
   await page.goto('.')
 })
 
+test('JCS refuses lone surrogates in values and names before signing, then accepts valid pairs', async ({ page }) => {
+  await page.locator('#jcs-toggle').check();
+  const out = page.locator('#sandbox [role="status"]');
+  for (const text of ['"\\ud800"', '{"\\udfff":1}', '{"x":["\\udc00"]}']) {
+    await page.locator('#sandbox-a').fill(text);
+    await page.locator('#sandbox-b').fill(text);
+    await page.locator('#sandbox button').click();
+    await expect(out).toContainText(/surrogate/i);
+    await expect(out.locator('.chip-crypto')).toContainText('NOT RUN');
+    await expect(out.locator('.chip-verdict')).toContainText('FAIL-CLOSED');
+  }
+  await page.locator('#sandbox-a').fill('"\\ud83d\\ude00"');
+  await page.locator('#sandbox-b').fill('"\\ud83d\\ude00"');
+  await page.locator('#sandbox button').click();
+  await expect(out.locator('.chip-crypto')).toContainText('VALID');
+  await expect(out.locator('.chip-verdict')).toContainText('OK');
+});
+
+test('special JSON members remain part of the signed meaning under JCS', async ({ page }) => {
+  await page.locator('#jcs-toggle').check();
+  await page.locator('#sandbox-a').fill('{"__proto__":{"n":1},"x":2}');
+  await page.locator('#sandbox-b').fill('{"x":2}');
+  await page.locator('#sandbox button').click();
+  const out = page.locator('#sandbox [role="status"]');
+  await expect(out).toContainText('different objects');
+  await expect(out.locator('.chip-crypto')).toContainText('INVALID');
+  await expect(out.locator('.chip-verdict')).toContainText('FAIL-CLOSED');
+});
+
 test('mechanism walkthrough: producer signs, gateway re-encodes, verifier fails closed', async ({ page }) => {
   const mech = page.locator('#mechanism')
   await mech.getByRole('button', { name: 'Start the walkthrough' }).click()

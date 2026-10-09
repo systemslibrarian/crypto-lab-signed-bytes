@@ -72,13 +72,13 @@ npm run test:a11y  # axe-core WCAG 2.1 AA gate (both themes), needs the build
 
 `npm run ci` runs the entire local quality bar in one command: typecheck → unit tests → production build → browser suite.
 
-- **132 Vitest tests**, all executed in CI before deploy, including:
+- **Vitest unit tests**, all executed in CI before deploy, including:
   - **RFC 8032 §7.1 known-answer tests** — 4 vectors (TEST 1, 2, 3, SHA(abc)): seed → public key, deterministic signature bytes, and verification (12 test cases).
-  - **RFC 8785 known-answer tests** — all 24 Appendix B number-serialization samples (IEEE-754 bits → canonical text) plus NaN/Infinity rejection; the §3.2.2 sample document canonicalized byte-for-byte; the §3.2.3 Unicode key-sorting example (UTF-16 code-unit order, emoji-before-U+FB33 included).
+  - **RFC 8785 known-answer tests** — all 24 Appendix B number-serialization samples (IEEE-754 bits → canonical text) plus NaN/Infinity and lone-surrogate rejection (values and property names); the §3.2.2 sample document canonicalized byte-for-byte; the §3.2.3 Unicode key-sorting example (UTF-16 code-unit order, emoji-before-U+FB33 included).
   - Hand-rolled parser: strict-grammar rejection suite and all three duplicate-key policies.
   - Stage logic: every verdict in the UI (fail-closed, repaired-by-JCS, the valid-signature ALARM) is asserted against the real primitives, and the entire Stage 5 tolerance matrix — all 16 boundary×mutation cells plus its monotonicity — is tested.
   - **Property tests** (seeded, reproducible): canonicalization is a fixed point and parse-stable over 600 generated documents; `serializeNumber` recovers the exact double from 2,000 random bit patterns (the shortest-round-trip property behind RFC 8785 Appendix B); random canonical documents sign/verify and any single flipped byte fails.
-- **8 browser behavior tests** (`e2e/behavior.spec.ts`) drive the built page the way a learner does — clicks and keyboard — and assert the headline teaching outcomes in the rendered UI: the walkthrough's fail-closed ending, what the JCS toggle does and does not repair, the valid-signature ALARM with both parser views, the keyboard-dragged boundary flip, the complete 16-cell matrix, and the measured scoreboard.
+- **Browser behavior tests** (`e2e/behavior.spec.ts`) drive the built page the way a learner does — clicks and keyboard — and assert the headline teaching outcomes in the rendered UI: the walkthrough's fail-closed ending, what the JCS toggle does and does not repair, the valid-signature ALARM with both parser views, the keyboard-dragged boundary flip, the complete 16-cell matrix, and the measured scoreboard.
 - **Accessibility gate**: `@axe-core/playwright` scans the production build in **both** themes for WCAG 2.1 A/AA; violations block the GitHub Pages deploy (`.github/workflows/deploy.yml`).
 - Hand-rolled teaching parts: `src/jcs/canonicalize.ts` (RFC 8785) and `src/json/parse.ts` (RFC 8259 + duplicate policies). Library crypto: `@noble/ed25519` + `@noble/hashes` — the signature scheme is not the lesson here, the bytes it binds are.
 
@@ -87,3 +87,13 @@ npm run test:a11y  # axe-core WCAG 2.1 AA gate (both themes), needs the build
 *Part of the [Crypto Lab](https://crypto-lab.systemslibrarian.dev/) suite.*
 
 *"So whether you eat or drink or whatever you do, do it all for the glory of God." — 1 Corinthians 10:31*
+
+
+The JCS serializer rejects lone Unicode surrogates before any signing, including
+nested string values and object property names. Valid surrogate pairs and the
+intended NFC/NFD distinction are preserved. The JSON parser also preserves
+`__proto__`, `constructor`, and `toString` as ordinary own data members, with the
+same first/last/reject duplicate policies; none silently disappears before
+canonicalization. These are serialization/correctness guards, not evidence of
+an Ed25519 forgery. Noble Ed25519 v3 uses the synchronous SHA-512 provider and
+strict `zip215: false` verification; RFC 8032 signature bytes remain pinned.
