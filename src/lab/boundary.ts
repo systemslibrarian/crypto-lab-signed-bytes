@@ -109,7 +109,18 @@ function deepNfc(v: JsonValue): JsonValue {
   if (Array.isArray(v)) return v.map(deepNfc)
   if (v !== null && typeof v === 'object') {
     const out: { [k: string]: JsonValue } = {}
-    for (const [k, val] of Object.entries(v)) out[k.normalize('NFC')] = deepNfc(val)
+    for (const [k, val] of Object.entries(v)) {
+      const normalizedKey = k.normalize('NFC')
+      if (Object.prototype.hasOwnProperty.call(out, normalizedKey)) {
+        throw new Error(`NFC-normalized object keys collide at ${JSON.stringify(normalizedKey)}`)
+      }
+      Object.defineProperty(out, normalizedKey, {
+        value: deepNfc(val),
+        enumerable: true,
+        configurable: true,
+        writable: true,
+      })
+    }
     return out
   }
   return v

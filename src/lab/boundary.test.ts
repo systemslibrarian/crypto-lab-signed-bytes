@@ -76,4 +76,17 @@ describe('Stage 5 — signature boundary', () => {
     expect(toSignedForm(nfc, 'normalize')).toBe(toSignedForm(nfd, 'normalize'))
     expect(toSignedForm(nfc, 'parse')).not.toBe(toSignedForm(nfd, 'parse'))
   })
+
+  it('normalization preserves special object member names as own data', () => {
+    const text = '{"__proto__":{"polluted":true},"constructor":2,"toString":3}'
+    expect(toSignedForm(text, 'normalize')).toBe(text)
+    expect(toSignedForm(text, 'canonical')).toBe(text)
+  })
+
+  it('fails closed when distinct object keys collide after NFC normalization', () => {
+    const text = '{"é":1,"é":2}'
+    for (const point of ['normalize', 'canonical'] as SignPoint[]) {
+      expect(() => toSignedForm(text, point)).toThrow(/NFC-normalized object keys collide/)
+    }
+  })
 })

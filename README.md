@@ -91,9 +91,11 @@ npm run test:a11y  # axe-core WCAG 2.1 AA gate (both themes), needs the build
 
 The JCS serializer rejects lone Unicode surrogates before any signing, including
 nested string values and object property names. Valid surrogate pairs and the
-intended NFC/NFD distinction are preserved. The JSON parser also preserves
-`__proto__`, `constructor`, and `toString` as ordinary own data members, with the
-same first/last/reject duplicate policies; none silently disappears before
-canonicalization. These are serialization/correctness guards, not evidence of
-an Ed25519 forgery. Noble Ed25519 v3 uses the synchronous SHA-512 provider and
-strict `zip215: false` verification; RFC 8032 signature bytes remain pinned.
+intended NFC/NFD distinction are preserved. The JSON parser and NFC pipeline
+also preserve `__proto__`, `constructor`, and `toString` as ordinary own data
+members, with the same first/last/reject duplicate policies; none silently
+disappears before canonicalization. If two distinct object keys collide after
+NFC normalization, the pipeline rejects the document rather than choosing a
+value. These are serialization/correctness guards, not evidence of an Ed25519
+forgery. Noble Ed25519 v3 uses the synchronous SHA-512 provider and strict
+`zip215: false` verification; RFC 8032 signature bytes remain pinned.
