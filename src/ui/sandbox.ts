@@ -1,4 +1,5 @@
 import { utf8Encode } from '../core/bytes'
+import { JsonParseError } from '../json/parse'
 import { recoveredMeaning, runSignAcross } from '../lab/stages'
 import { chips, h, hexDiffView, liveRegion } from './dom'
 import type { LabCtx } from './context'
@@ -22,8 +23,9 @@ export function mountSandbox(root: HTMLElement, ctx: LabCtx): void {
     try {
       sameMeaning = recoveredMeaning(a, 'last') === recoveredMeaning(b, 'last')
     } catch (e) {
+      const reason = e instanceof JsonParseError ? 'Could not parse:' : 'Cannot compare these JSON values.'
       out.replaceChildren(
-        chips(null, 'fail-closed', `Cannot compare these JSON values. ${(e as Error).message}. Signing and verification did not run.`),
+        chips(null, 'fail-closed', `${reason} ${(e as Error).message}. Signing and verification did not run.`),
       )
       return
     }
