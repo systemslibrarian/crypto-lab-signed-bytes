@@ -18,35 +18,37 @@ export function mountSandbox(root: HTMLElement, ctx: LabCtx): void {
   function run(): void {
     const a = taA.value
     const b = taB.value
-    let meaningLine: HTMLElement
+    let sameMeaning: boolean
     try {
-      const equal = recoveredMeaning(a, 'last') === recoveredMeaning(b, 'last')
-      meaningLine = h(
-        'p',
-        { class: 'digest' },
-        'Parsed meaning (last-wins parser): ',
-        equal
-          ? h('span', { class: 'match-yes' }, '✓ identical objects')
-          : h('span', { class: 'match-no' }, '✗ different objects'),
-      )
+      sameMeaning = recoveredMeaning(a, 'last') === recoveredMeaning(b, 'last')
     } catch (e) {
       out.replaceChildren(
-        chips(null, 'fail-closed', `Could not parse: ${(e as Error).message}. Nothing was signed — malformed input fails closed.`),
+        chips(null, 'fail-closed', `Cannot compare these JSON values. ${(e as Error).message}. Signing and verification did not run.`),
       )
       return
     }
+    const meaningLine = h('p', { class: 'digest' }, 'Last-wins parser comparison · ',
+      sameMeaning
+        ? h('span', { class: 'match-yes' }, '✓ same JSON value')
+        : h('span', { class: 'match-no' }, '✗ different JSON values'),
+    )
     const run = runSignAcross(a, b, ctx.kp, ctx.jcs())
-    const note = run.jcsError
-      ? `JCS refused the input (${run.jcsError}) — nothing signed, nothing accepted.`
-      : run.verdict === 'ok'
-        ? run.jcs
-          ? 'With JCS on, both ends canonicalize to the same byte string before signing/verifying, so the signature verifies — and the two spellings really do carry the same meaning.'
-          : 'The two texts are byte-identical, so of course the signature verifies.'
-        : run.verdict === 'alarm'
-          ? 'A signature verified while the parsed meanings differ — inspect the documents above.'
-          : run.sigValid === false && ctx.jcs()
-            ? 'Even after canonicalization the two documents are different byte strings — they genuinely disagree, and the verifier correctly refuses. Fail-closed.'
-            : 'The verifier answered a question about bytes, and the bytes differ — even though a parser recovers the same object from both. Fail-closed: safe, but broken interop.'
+    if (run.jcsError) {
+      out.replaceChildren(meaningLine, chips(null, 'fail-closed', `JCS refused the input. ${run.jcsError}. Signing and verification did not run.`))
+      return
+    }
+    let note: string
+    if (run.verdict === 'ok') {
+      note = run.jcs
+        ? 'Both documents canonicalize to the same bytes, so the signature verifies.'
+        : 'The two texts are byte-identical, so the signature verifies.'
+    } else if (run.verdict === 'alarm') {
+      note = 'The signature verified, but the parser produced different JSON values.'
+    } else {
+      note = sameMeaning
+        ? 'The parser recovered the same JSON value from both documents. Their different bytes caused verification to fail.'
+        : 'The documents encode different JSON values. The signature for the left document failed verification on the right.'
+    }
     out.replaceChildren(
       hexDiffView('Left (signed)', utf8Encode(run.signedText), 'Right (verified)', utf8Encode(run.verifiedText)),
       meaningLine,
@@ -54,6 +56,13 @@ export function mountSandbox(root: HTMLElement, ctx: LabCtx): void {
     )
   }
 
+  function retire(): void {
+    if (!out.firstElementChild) return
+    out.textContent = 'Document edited. Run the comparison to sign and verify the current text.'
+  }
+
+  taA.addEventListener('input', retire)
+  taB.addEventListener('input', retire)
   runBtn.addEventListener('click', run)
   ctx.onJcs(run)
 

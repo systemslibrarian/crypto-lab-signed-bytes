@@ -35,7 +35,7 @@ test('special JSON members remain part of the signed meaning under JCS', async (
   await page.locator('#sandbox-b').fill('{"x":2}');
   await page.locator('#sandbox button').click();
   const out = page.locator('#sandbox [role="status"]');
-  await expect(out).toContainText('different objects');
+  await expect(out).toContainText('different JSON values');
   await expect(out.locator('.chip-crypto')).toContainText('INVALID');
   await expect(out.locator('.chip-verdict')).toContainText('FAIL-CLOSED');
 });
@@ -120,4 +120,41 @@ test('unicode stage: normalize-before repairs, normalize-after breaks a genuine 
   await page.locator('#um-normalize-after').check()
   await expect(s2).toContainText('INVALID ✗')
   await expect(s2).toContainText('FAIL-CLOSED')
+})
+
+
+test('sandbox clears each edited document’s verdict and explains the actual value comparison', async ({ page }) => {
+  const panel = page.locator('#sandbox')
+  const left = panel.locator('#sandbox-a')
+  const right = panel.locator('#sandbox-b')
+  const out = panel.getByRole('status')
+  const run = panel.getByRole('button', { name: 'Sign left · verify right' })
+  await left.fill('{"count":1}')
+  await right.fill('{"count":1}')
+  await run.click()
+  await expect(out.locator('.chip-crypto .chip-state')).toHaveText('VALID ✓')
+  await right.fill('{"count":2}')
+  await expect(out.locator('.chip-crypto')).toHaveCount(0)
+  await run.click()
+  await expect(out.locator('.chip-crypto')).toContainText('INVALID')
+  await expect(out).toContainText('encode different JSON values')
+  await left.fill('{ "count": 2 }')
+  await expect(out.locator('.chip-verdict')).toHaveCount(0)
+  await run.click()
+  await expect(out.locator('.chip-crypto')).toContainText('INVALID')
+  await expect(out).toContainText('recovered the same JSON value')
+  await page.locator('#jcs-toggle').check()
+  await expect(out.locator('.chip-crypto .chip-state')).toHaveText('VALID ✓')
+})
+
+test('sandbox displays no signed bytes or verifier verdict when canonicalization refuses input', async ({ page }) => {
+  const panel = page.locator('#sandbox')
+  await page.locator('#jcs-toggle').check()
+  await panel.locator('#sandbox-a').fill('{"n":1,"n":2}')
+  await panel.locator('#sandbox-b').fill('{"n":2}')
+  await panel.getByRole('button').click()
+  const out = panel.getByRole('status')
+  await expect(out.locator('.chip-crypto')).toContainText('NOT RUN')
+  await expect(out).toContainText('JCS refused')
+  await expect(out).not.toContainText('Left (signed)')
 })
