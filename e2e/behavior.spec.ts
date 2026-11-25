@@ -84,6 +84,23 @@ test('duplicate keys under JCS: rejected at parse, nothing signed', async ({ pag
   await expect(s3).toContainText(/duplicate/i)
 })
 
+test('duplicate-key editor retires old evidence and malformed JSON is never signed', async ({ page }) => {
+  const panel = page.locator('#stage-3')
+  const input = panel.locator('#dup-doc')
+  const out = panel.getByRole('status')
+  const run = panel.getByRole('button', { name: /Sign the exact bytes/ })
+
+  await expect(out.locator('.chip-crypto')).toContainText('VALID')
+  await input.fill('{"role":')
+  await expect(out.locator('.chip-crypto')).toHaveCount(0)
+  await expect(out).toContainText('Document edited')
+
+  await run.click()
+  await expect(out.locator('.chip-crypto')).toContainText('NOT RUN')
+  await expect(out.locator('.chip-verdict')).toContainText('FAIL-CLOSED')
+  await expect(out).toContainText('Nothing was signed or accepted')
+})
+
 test('boundary slider (keyboard): dragging the tap from raw to canonical flips a reordered doc from rejected to verified', async ({ page }) => {
   await page.locator('#mut-reorder').check()
   const s5 = page.locator('#stage-5 [role="status"]')

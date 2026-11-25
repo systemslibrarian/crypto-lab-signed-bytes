@@ -99,6 +99,15 @@ describe('Stage 3 — duplicate keys (the centerpiece)', () => {
     expect(run.verdict).toBe('fail-closed')
     expect(run.jcsError).toMatch(/duplicate/)
   })
+
+  it('malformed JSON is refused by the policy parser before signing', () => {
+    const run = runDuplicates('{"role":', kp, false)
+    expect(run.sigValid).toBe(false)
+    expect(run.signature).toEqual(new Uint8Array(64))
+    expect(run.signedText).toBe('')
+    expect(run.verdict).toBe('fail-closed')
+    expect(run.jcsError).toMatch(/unexpected end of input/)
+  })
 })
 
 describe('Stage 4 — number spellings and float64 round-trip', () => {

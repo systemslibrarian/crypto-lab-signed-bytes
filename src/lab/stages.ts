@@ -200,7 +200,6 @@ export function runDuplicates(text: string, kp: Keypair, useJcs: boolean): Dupli
     }
   }
 
-  const run = signVerify(text, text, kp) // same bytes both ends — sigValid is true
   let verifierView: string
   let applicationView: string
   let duplicateKeys: string[]
@@ -211,14 +210,21 @@ export function runDuplicates(text: string, kp: Keypair, useJcs: boolean): Dupli
     applicationView = canonicalize(lastWins.value)
     duplicateKeys = firstWins.duplicates.map((d) => d.path)
   } catch (e) {
+    // The signing service's policy check parses before signing. Malformed JSON
+    // therefore has no signature result; do not manufacture a green crypto
+    // result for bytes the service would have refused upstream.
     return {
-      ...run,
+      signedText: '',
+      verifiedText: text,
+      signature: new Uint8Array(64),
+      sigValid: false,
       verdict: 'fail-closed',
       jcs: false,
       jcsError: String((e as Error).message),
       ...empty,
     }
   }
+  const run = signVerify(text, text, kp) // same accepted bytes both ends — sigValid is true
   const diverged = verifierView !== applicationView
   return {
     ...run,

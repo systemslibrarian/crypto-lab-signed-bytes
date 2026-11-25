@@ -52,6 +52,10 @@ export function mountStageDup(root: HTMLElement, ctx: LabCtx): void {
   }
 
   runBtn.addEventListener('click', run)
+  ta.addEventListener('input', () => {
+    if (!out.firstElementChild) return
+    out.textContent = 'Document edited. Run the signing and parser comparison for the current bytes.'
+  })
   ctx.onJcs(run)
   root.append(
     h('label', { for: 'dup-doc' }, 'Craft the document the signing service will sign:'),
